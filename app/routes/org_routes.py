@@ -40,8 +40,11 @@ def validate_request_body(request_body):
 
     wf_data = request_body["foci"]
 
-    for wf_id in wf_data:
-        validate_wf_enum(wf_id)
+    if type(wf_data) == list or type(wf_data) == tuple:
+        for wf_id in wf_data:
+            validate_wf_enum(wf_id)
+    else:
+        validate_wf_enum(wf_data)
 
 @bp.route("", methods=["POST"], strict_slashes=False)
 def create_org():

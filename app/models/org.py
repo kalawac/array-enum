@@ -24,12 +24,18 @@ class Org(db.Model):
             org_sector=data_dict["sector"]
             )
 
-        if len(data_dict.get("foci", [])) >= 1:
-            wf_list = []
-            for wf_id in data_dict["foci"]:
-                wf_enum = WF(wf_id) if (type(wf_id) == int) else WF[wf_id]
-                wf_list.append(wf_enum)
-            new_org.foci = tuple(wf_list)
+        wf_data = data_dict.get("foci")
+
+        if wf_data:
+            if type(wf_data) == list or type(wf_data) == tuple:
+                wf_list = []
+                for wf_id in wf_data:
+                    wf_enum = WF(wf_id) if (type(wf_id) == int) else WF[wf_id]
+                    wf_list.append(wf_enum.name)
+                new_org.foci = wf_list
+            else:
+                wf_enum = WF(wf_data) if (type(wf_data) == int) else WF[wf_data]
+                new_org.foci=[wf_enum.name]
 
         return new_org
 
