@@ -10,7 +10,9 @@ class Org(db.Model):
         UUID(as_uuid = True), primary_key = True, default = uuid.uuid4)
     name = db.Column(db.String)
     org_sector = db.Column(db.Enum(OrgSector))
-    foci = db.Column(db.ARRAY(db.Enum(WF, name="wf_enum", create_constraint=False, native_enum=False)))
+    # foci = db.Column(db.ARRAY(db.Enum(WF, name="wf", create_constraint=False, native_enum=False)))
+    foci = db.Column(db.ARRAY(db.Enum(WF, name="wf")))
+    # remember to add create_constraint=False to migration before db upgrade
 
     def __repr__(self):
         return '<Org %r>' % self.name
@@ -19,14 +21,16 @@ class Org(db.Model):
     def new_from_dict(cls, data_dict):
         new_org = cls(
             name=data_dict["name"], 
-            org_sector=data_dict["sector"],
+            org_sector=data_dict["sector"]
             )
 
         if len(data_dict.get("foci", [])) >= 1:
+            wf_list = []
             for wf_id in data_dict["foci"]:
-                wf = validate_intID(WF, wf_id)
-                new_org.focus_rel.append(wf)
-        
+                wf_enum = WF(wf_id) if (type(wf_id) == int) else WF[wf_id]
+                wf_list.append(wf_enum)
+            new_org.foci = tuple(wf_list)
+
         return new_org
 
     def to_dict(self):
