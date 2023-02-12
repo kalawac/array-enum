@@ -10,8 +10,8 @@ class Org(db.Model):
         UUID(as_uuid = True), primary_key = True, default = uuid.uuid4)
     name = db.Column(db.String)
     org_sector = db.Column(db.Enum(OrgSector))
-    # foci = db.Column(db.ARRAY(db.Enum(WF, name="wf", create_constraint=False, native_enum=False)))
-    foci = db.Column(db.ARRAY(db.Enum(WF, name="wf")))
+    foci = db.Column(db.ARRAY(db.Enum(WF, name="wf", create_constraint=False, native_enum=False)))
+    # foci = db.Column(db.ARRAY(db.Enum(WF, name="wf")))
     # remember to add create_constraint=False to migration before db upgrade
 
     def __repr__(self):
@@ -35,7 +35,7 @@ class Org(db.Model):
                 new_org.foci = wf_list
             else:
                 wf_enum = WF(wf_data) if (type(wf_data) == int) else WF[wf_data]
-                new_org.foci=[wf_enum.name]
+                new_org.foci=[wf_enum]
 
         return new_org
 

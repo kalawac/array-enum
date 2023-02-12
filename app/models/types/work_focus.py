@@ -1,6 +1,6 @@
-from enum import Enum
+from enum import IntEnum
 
-class WF(Enum):
+class WF(IntEnum):
     INDIGENOUS = 1
     LGBTI = 2
     REL_FREEDOM = 3

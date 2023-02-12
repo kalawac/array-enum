@@ -88,12 +88,21 @@ def get_all_orgs():
                 existing_query = True
 
         if wf_query:
-            if wf_query.find("+") > -1:
-                query_items = wf_query.split["+"]
+            if str(wf_query).find("+") > -1:
+                wf_plus_split = "+"
+            elif str(wf_query).find(" ") > -1:
+                wf_plus_split = " "
+            elif str(wf_query).find("%2B") > -1:
+                wf_plus_split = "%2B"
+            else:
+                wf_plus_split = False
+
+            if wf_plus_split:
+                query_items = wf_query.split(wf_plus_split)
                 item_query = Org.query
                 for item in query_items:
                     wf_enum = validate_wf_enum(item)
-                    item_query = item_query.filter_by(foci=wf_enum)
+                    item_query = item_query.filter(Org.foci.any(wf_enum))
                 
                 if existing_query:
                     orgs_query = orgs_query.union(item_query)
@@ -103,15 +112,15 @@ def get_all_orgs():
                 query_items = wf_query.split["_"]
                 for item in query_items:
                     wf_enum = validate_wf_enum(item)
-                    item_query = Org.query.filter_by(foci=wf_enum)
+                    item_query = Org.query.filter(Org.foci.any(wf_enum))
                     orgs_query = orgs_query.union(item_query)
             else:
                 wf_enum = validate_wf_enum(wf_query)
                 if existing_query:
-                    q_wf = orgs_query.filter_by(foci=wf_enum)
+                    q_wf = orgs_query.filter(Org.foci.any(wf_enum))
                     orgs_query = orgs_query.union(q_wf)
                 else:
-                    orgs_query = orgs_query.filter_by(foci=wf_enum)
+                    orgs_query = orgs_query.filter(Org.foci.any(wf_enum))
 
     else:
         if name_query:
@@ -122,20 +131,30 @@ def get_all_orgs():
             orgs_query = orgs_query.filter_by(org_sector=sector_enum)
 
         if wf_query:
-            if wf_query.find("+") > -1:
-                query_items = wf_query.split["+"]
-                for item in query_items:
-                    wf_enum = validate_wf_enum(item)
-                    orgs_query = orgs_query.filter_by(foci=wf_enum)
+            if str(wf_query).find("+") > -1:
+                wf_plus_split = "+"
+            elif str(wf_query).find(" ") > -1:
+                wf_plus_split = " "
+            elif str(wf_query).find("%2B") > -1:
+                wf_plus_split = "%2B"
+            else:
+                wf_plus_split = False
+
+            if wf_plus_split:
+                query_items = wf_query.split(wf_plus_split)
+                
+                for wf_id in query_items:
+                    wf_enum = validate_wf_enum(wf_id)
+                    orgs_query = orgs_query.filter(Org.foci.any(wf_enum))
             elif wf_query.find("_") > -1:
-                query_items = wf_query.split["_"]
-                for item in query_items:
-                    wf_enum = validate_wf_enum(item)
-                    item_query = Org.query.filter_by(foci=wf_enum)
+                query_items = wf_query.split("_")
+                for wf_id in query_items:
+                    wf_enum = validate_wf_enum(wf_id)
+                    item_query = Org.query.filter(Org.foci.any(wf_enum))
                     orgs_query = orgs_query.union(item_query)
             else:
                 wf_enum = validate_wf_enum(wf_query)
-                orgs_query = orgs_query.filter_by(foci=wf_enum)
+                orgs_query = orgs_query.filter(Org.foci.any(wf_enum))
 
     if sort_query:
         if sort_query == "desc":
@@ -169,17 +188,20 @@ def update_org(id):
     org.name = request_body["name"]
     org.org_sector = request_body["sector"]
 
-    if len(request_body.get("foci", [])) >= 1:
-        if not org.foci:
+    wf_data = request_body.get("foci")
+
+    if wf_data:
+        if type(wf_data) == list or type(wf_data) == tuple:
             wf_list = []
-        
-        for wf_id in request_body["foci"]:
-            wf_enum = validate_wf_enum(item)
-            if org.foci:
-                org.foci.append(wf_enum)
-            else:
+            for wf_id in wf_data:
+                wf_enum = validate_wf_enum(wf_id)
                 wf_list.append(wf_enum)
-                org.foci = tuple(wf_list)
+                org.foci = wf_list # we always want to replace the existing data
+        else:
+            wf_enum = validate_wf_enum(wf_id)
+            org.foci = [wf_enum]
+    else:
+        org.foci = []
 
     db.session.add(org)
     db.session.commit()
